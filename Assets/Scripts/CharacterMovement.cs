@@ -31,6 +31,11 @@ namespace Com.MyCompany.MyGame
 
         #region MonoBehaviour Callbacks
 
+        void OnGUI()
+        {
+            GUILayout.Label("Ping: " + PhotonNetwork.GetPing());
+        }
+
 
         void Start()
         {
@@ -70,11 +75,11 @@ namespace Com.MyCompany.MyGame
 
             RaycastHit hit;
 
-            Debug.DrawLine(this.transform.position - (Vector3.up/2), this.transform.position - Vector3.up, Color.red, 1f);
+            // Debug.DrawLine(this.transform.position - (Vector3.up/2), this.transform.position - Vector3.up, Color.red, 1f);
 
             if(Physics.Raycast(this.transform.position - (Vector3.up/2), -Vector3.up, out hit, 1f))
             {
-                Debug.DrawLine(this.transform.position - (Vector3.up/2), hit.point, Color.blue, 1f);
+                // Debug.DrawLine(this.transform.position - (Vector3.up/2), hit.point, Color.blue, 1f);
                 if (hit.distance < 1f)
                 {
                     return true;
