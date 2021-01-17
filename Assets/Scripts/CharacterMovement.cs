@@ -6,7 +6,7 @@ using Photon.Pun;
 namespace Com.MyCompany.MyGame
 {
     
-    public class CharacterMovement : MonoBehaviourPun
+    public class CharacterMovement : MonoBehaviourPun, IPunObservable
     {
 
         #region Public Fields
@@ -21,10 +21,15 @@ namespace Com.MyCompany.MyGame
 
         #region Private Fields
 
+        float currentTime = 0;
+        double currentPacketTime = 0;
+        double lastPacketTime = 0;
         const float gravity = 9.8f;
-        Rigidbody characterRigidbody;
+        Vector3 latestPosition;
+        Vector3 positionAtLastPacket = Vector3.zero;
         Vector3 movementVector = Vector3.zero;
         Vector3 jumpVector = Vector3.zero;
+        Rigidbody characterRigidbody;
 
         #endregion
 
@@ -42,10 +47,16 @@ namespace Com.MyCompany.MyGame
             characterRigidbody = this.GetComponent<Rigidbody>();
         }
 
+
         void Update()
         {
             if(!photonView.IsMine && PhotonNetwork.IsConnected)
-                return;
+            {
+                double timeToReachGoal = currentPacketTime - lastPacketTime;
+                currentTime += Time.deltaTime;
+
+                transform.position = Vector3.Lerp(positionAtLastPacket, latestPosition, (float)(currentTime / timeToReachGoal));
+            }
             
             movementVector = Vector3.ClampMagnitude(new Vector3(Input.GetAxis("Vertical"), 0f, -Input.GetAxis("Horizontal")), 1f);
 
@@ -61,11 +72,6 @@ namespace Com.MyCompany.MyGame
                 }
             }
 
-            // jumpVector.y -= gravity * Time.deltaTime;
-
-            // jumpVector = new Vector3(jumpVector.x, Mathf.Clamp(jumpVector.y, 0, Mathf.Infinity), jumpVector.z);
-
-            // characterRigidbody.MovePosition(jumpVector * Time.deltaTime);
 
         }
 
@@ -87,6 +93,28 @@ namespace Com.MyCompany.MyGame
             }
 
             return false;
+        }
+
+        #endregion
+
+
+        #region IPunObservable
+
+        public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+        {
+            if(stream.IsWriting)
+            {
+                stream.SendNext(transform.position);
+            }
+            else
+            {
+                latestPosition = (Vector3)stream.ReceiveNext();
+
+                currentTime = 0.0f;
+                lastPacketTime = currentPacketTime;
+                currentPacketTime = info.SentServerTime;
+                positionAtLastPacket = transform.position;
+            }
         }
 
         #endregion
