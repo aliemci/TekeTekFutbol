@@ -181,6 +181,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c2ecc15319b41c4a87e245b41f4590d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 10
+  speed: 4
   jumpPower: 5
   isGrounded: 0
+  moveSpeed: 0
+  ball: {fileID: 0}

@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using Photon.Pun;
 using Photon.Realtime;
 
@@ -14,7 +15,7 @@ namespace Com.MyCompany.MyGame
 
         [SerializeField] private byte maxPlayerPerRoom = 2;
         [SerializeField] private GameObject controlPanel;
-        [SerializeField] private GameObject progressLabel;
+        [SerializeField] private Text progressLabel;
 
 
         #endregion
@@ -23,9 +24,7 @@ namespace Com.MyCompany.MyGame
         #region Private Fields
 
 
-        /// <summary>
-        /// This client's version number. Users are separated from each other by gameVersion (which allows you to make breaking changes).
-        /// </summary>
+        /// <summary> This client's version number. Users are separated from each other by gameVersion (which allows you to make breaking changes). </summary>
         string gameVersion = "1";
 
         bool isConnecting;
@@ -38,26 +37,27 @@ namespace Com.MyCompany.MyGame
         #region MonoBehaviour CallBacks
 
 
-        /// <summary>
-        /// MonoBehaviour method called on GameObject by Unity during early initialization phase.
-        /// </summary>
         void Awake()
         {
             // #Critical
             // this makes sure we can use PhotonNetwork.LoadLevel() on the master client and all clients in the same room sync their level automatically
             PhotonNetwork.AutomaticallySyncScene = true;
+         
+            Application.targetFrameRate = 60;
         }
 
 
-        /// <summary>
-        /// MonoBehaviour method called on GameObject by Unity during initialization phase.
-        /// </summary>
         void Start()
         {
-            progressLabel.SetActive(false);
+            progressLabel.gameObject.SetActive(true);
             controlPanel.SetActive(true);
         }
 
+        void Update()
+        {
+            progressLabel.text = PhotonNetwork.LevelLoadingProgress.ToString();
+
+        }
 
         #endregion
 
@@ -72,15 +72,17 @@ namespace Com.MyCompany.MyGame
         /// </summary>
         public void Connect()
         {
-            progressLabel.SetActive(true);
+            progressLabel.gameObject.SetActive(true);
             controlPanel.SetActive(false);
 
 
             // we check if we are connected or not, we join if we are , else we initiate the connection to the server.
             if (PhotonNetwork.IsConnected)
             {
+                PhotonNetwork.JoinOrCreateRoom("Room 0", new RoomOptions(){IsOpen=true, IsVisible=true, MaxPlayers=maxPlayerPerRoom}, TypedLobby.Default);
+
                 // #Critical we need at this point to attempt joining a Random Room. If it fails, we'll get notified in OnJoinRandomFailed() and we'll create one.
-                PhotonNetwork.JoinRandomRoom();
+                // PhotonNetwork.CreateRoom("Room 0", new RoomOptions(){IsOpen=true, IsVisible=true, MaxPlayers=maxPlayerPerRoom});
             }
             else
             {
@@ -90,6 +92,10 @@ namespace Com.MyCompany.MyGame
             }
         }
 
+        public void Set60FPS()
+        {
+            Application.targetFrameRate = 60;
+        }
 
         #endregion
 
@@ -102,18 +108,20 @@ namespace Com.MyCompany.MyGame
 
             if(isConnecting)
             {
-                PhotonNetwork.JoinRandomRoom();
+                
+                PhotonNetwork.JoinOrCreateRoom("Room 0", new RoomOptions(){IsOpen=true, IsVisible=true, MaxPlayers=maxPlayerPerRoom}, TypedLobby.Default);
+                // PhotonNetwork.JoinRoom("Room 0");
 
                 isConnecting = false;
             }
 
         }
 
-        public override void OnJoinRandomFailed(short returnCode, string message)
-        {
-            Debug.Log("Random join failed!");
-            PhotonNetwork.CreateRoom(null, new RoomOptions{MaxPlayers = maxPlayerPerRoom});
-        }
+        // public override void OnJoinRandomFailed(short returnCode, string message)
+        // {
+        //     Debug.Log("Random join failed!");
+        //     PhotonNetwork.CreateRoom(null, new RoomOptions{MaxPlayers = maxPlayerPerRoom});
+        // }
 
         public override void OnJoinedRoom()
         {
@@ -129,7 +137,7 @@ namespace Com.MyCompany.MyGame
 
         public override void OnDisconnected(DisconnectCause cause)
         {
-            progressLabel.SetActive(false);
+            progressLabel.gameObject.SetActive(false);
             controlPanel.SetActive(true);
 
             isConnecting = false;
